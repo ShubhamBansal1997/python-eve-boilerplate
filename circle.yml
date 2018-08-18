@@ -1,0 +1,58 @@
+## Customize the test machine
+machine:
+  python:
+    version: '3.6.5'
+  environment:
+    # each command in its own shell, so just adding an export FOO=bar command won't work
+   MONGO_HOST: "localhost"
+   MONGO_PORT: "27017"
+   MONGO_DBNAME: "mydb_test"
+   MONGO_USERNAME: ''
+   MONGO_PASSWORD: ''
+  #services # by default popular ones re running on our build machines (bound to localhost), inclding
+  # - redis
+
+## Customize checkout
+#checkout:
+# post:
+#   - git submodule sync
+
+## Customize dependencies
+dependencies:
+  override:
+  - pip install ansible
+  - pip install -r requirements/development.txt
+
+
+## Customize test commands
+test:
+  override:
+    - flake8
+    - py.test --cov --cov-report term-missing -v --tb=native --junitxml=$CIRCLE_TEST_REPORTS/summary.xml
+    - converage html -d $CIRCLE_ARTIFACTS
+
+## Customize deployment commands
+
+# To enable Heroku deployment add heroku API key under project setting deployment in circle
+deployment:
+  dev:
+    branch: master
+    owner: shubhambansal1997
+    heroku: # add key via https://circleci.com/acccount/heroku
+      appname: python-eve-boilerplate-dev
+    qa:
+      branch: qa
+      owner: shubhambansal1997
+      heroku:
+        appname: python-eve-boilerplate-qa
+    prod:
+      branch: prod
+      owner: shubhambansal1997
+      heroku:
+        appname: python-eve-boilerplate-prod
+
+## Custom notifications
+# notify:
+  # webhooks:
+    # A list of hashes representing hooks. Only the url field is supported
+    # - url: https://someurl.com/hooks/circle

@@ -1,0 +1,56 @@
+# For more information about the configurations used in this file, please
+# see the Travis CI documentation: https://docs.travis-ci.com
+
+language: python
+sudo: false
+python:
+- '3.6.5'
+
+addons:
+  monogodb: "4.0"
+  apt:
+    packages:
+      - mongodb-org
+
+cache:
+  directories:
+    - $HOME/.cache/pip
+
+before_cache:
+  - rm -f $HOME/.cache/pip/log/debug.log
+
+install:
+  - pip install ansible
+  - pip install -r requirements/development.txt
+
+before_script:
+- export MONGO_HOST='localhost'
+- export MONGO_PORT='27017'
+- export MONGO_DBNAME='mydb_test'
+- export MONGO_USERNAME='travis'
+- export MONGO_PASSWORD='test'
+- sleep 15
+- mongo mydb_test --eval 'db.createUser({user:"travis",pwd:"test",roles:["readWrite"]});'
+
+script:
+- flake8
+- py.test --cov -v --tb=native
+
+notifications:
+  email:
+    on_success: change  # [always|never|change]
+    on_failure: always  # [always|never|change]
+deploy:
+  provider: heroku
+  buildpack: python
+  strategy: api
+  api_key:
+    # travis encrypt $(heroku auth:token) --add deploy.api_key
+    secure: <add_heroku_auth_token_here>
+  app:
+    master: python-eve-boilerplate-dev
+    qa: python-eve-boilerplate-qa
+    prod: python-eve-boilerplate-prod
+  on:
+    repo: shubhambansal1997/python-eve-boilerplate
+

@@ -1,0 +1,40 @@
+version: '3'
+services:
+  database:
+    image: mongo:4.0
+    volumes:
+      - database_volume:/data/db
+    networks:
+      - database_network
+
+  web:
+    build: '.'
+    environment:
+      SETTINGS_MODULE: ${SETTINGS_MODULE}
+    volumes:
+      - .:/opt/services/web/src
+    networks:
+      - database_network
+      - nginx_network
+    depends_on:
+      - database
+
+    # reverse proxy container (nginx)
+    nginx:
+      image: nginx:1.13
+      ports:
+        - 8000:80
+      volumes:
+        - ./config/nginx/conf.d:/etc/nginx/conf.d
+      networks:
+        - nginx_network
+      depends_on:
+        - web
+networks:
+  database_network:
+    driver: bridge
+  nginx_network:
+    driver: bridge
+
+volumes:
+  database_volume:
